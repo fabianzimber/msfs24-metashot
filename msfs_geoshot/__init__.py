@@ -4,13 +4,13 @@ import os
 import sys
 from pathlib import Path
 
-__version__ = "1.0.0-beta.2"
+__version__ = "2.0.0"
 __author__ = "pyviator"
 __author_link__ = "https://github.com/pyviator"
-__app_name__ = "MSFS GeoShot"
-__copyright_year__ = 2021
-__repository__ = "https://github.com/pyviator/msfs-geoshot"
-__issues_tracker__ = "https://github.com/pyviator/msfs-geoshot/issues"
+__app_name__ = "MSFS MetaShot"
+__copyright_year__ = 2024
+__repository__ = "https://github.com/fabianzimber/msfs24-metashot"
+__issues_tracker__ = "https://github.com/fabianzimber/msfs24-metashot/issues"
 __support_thread__ = ""
 __store_url__ = "https://flightsim.to/file/20868/geoshot-geotagged-screenshots-and-more"
 

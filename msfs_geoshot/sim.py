@@ -63,7 +63,7 @@ _nullable_sim_data: Set[str] = set(("dest_latitude", "dest_longitude", "aircraft
 class SimService:
 
     _sim_executable = "FlightSimulator.exe"
-    _sim_window_title = "Microsoft Flight Simulator"
+    _sim_window_title = "Microsoft Flight Simulator 2024"
 
     def _is_sim_running(self) -> bool:
         return self._sim_executable in (p.name() for p in psutil.process_iter())
@@ -87,7 +87,14 @@ class SimService:
             raise SimServiceError("Could not find simulator window.")
         return results[0]
 
-    def get_flight_data(self) -> Optional[Metadata]:
+    def get_flight_data(
+        self,
+        artist: Optional[str] = None,
+        copyright_text: Optional[str] = None,
+        user_comment: Optional[str] = None,
+        rating: Optional[int] = None,
+        keywords: Optional[str] = None,
+    ) -> Optional[Metadata]:
         if not self._is_sim_running():
             raise SimServiceError("Simulator is not running")
 
@@ -140,9 +147,24 @@ class SimService:
             warnings.warn("User is not currently in flight.")
             return None
 
-        return self._sim_location_to_metadata(sim_location_data)
+        return self._sim_location_to_metadata(
+            sim_location_data,
+            artist=artist,
+            copyright_text=copyright_text,
+            user_comment=user_comment,
+            rating=rating,
+            keywords=keywords,
+        )
 
-    def _sim_location_to_metadata(self, sim_location_data: _SimData) -> Metadata:
+    def _sim_location_to_metadata(
+        self,
+        sim_location_data: _SimData,
+        artist: Optional[str] = None,
+        copyright_text: Optional[str] = None,
+        user_comment: Optional[str] = None,
+        rating: Optional[int] = None,
+        keywords: Optional[str] = None,
+    ) -> Metadata:
         description = sim_location_data.aircraft_type
         capture_time = time.time()
 
@@ -173,4 +195,10 @@ class SimService:
             # MISC
             Description=description,
             ImageDescription=description,
+            # User-configurable metadata
+            Artist=artist or None,
+            Copyright=copyright_text or None,
+            UserComment=user_comment or None,
+            Rating=rating if rating and rating > 0 else None,
+            Keywords=keywords or None,
         )

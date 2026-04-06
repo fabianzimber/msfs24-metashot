@@ -11,7 +11,19 @@ from PyQt5.QtGui import (
     QKeySequence,
     QPixmap,
 )
-from PyQt5.QtWidgets import QApplication, QFileDialog, QLineEdit, QMainWindow
+from PyQt5.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPlainTextEdit,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .. import RESOURCES_PATH, __app_name__, __author__, __store_url__, __version__
 from ..metadata import Metadata
@@ -68,6 +80,8 @@ class MainWindow(QMainWindow):
         self._thumbnail_widget.clicked.connect(self._on_open_last_screenshot)  # type: ignore
         self._thumbnail_widget.setPixmap(app_icon.pixmap(QSize(170, 96)))
 
+        self._setup_metadata_tab()
+
         self._load_ui_state_from_settings()
         self._setup_input_validators()
         self._setup_format_field_description()
@@ -80,6 +94,134 @@ class MainWindow(QMainWindow):
             f"<b>{__app_name__}</b> v{__version__} by {__author__}"
         )
         self.setWindowTitle(__app_name__)
+
+    def _setup_metadata_tab(self):
+        """Create and add the Metadata Settings tab programmatically."""
+        metadata_tab = QWidget()
+        metadata_layout = QVBoxLayout(metadata_tab)
+        metadata_layout.setSpacing(12)
+
+        # Description label
+        intro_label = QLabel(
+            "Configure metadata fields that will be automatically embedded "
+            "into every screenshot you take. These values are written as "
+            "EXIF/XMP tags and are visible in photo viewers and file explorers."
+        )
+        intro_label.setWordWrap(True)
+        intro_label.setStyleSheet("color: #a6adc8; font-size: 9pt; padding: 4px 0;")
+        metadata_layout.addWidget(intro_label)
+
+        # --- Author / Copyright Group ---
+        author_group = QGroupBox("Author && Copyright")
+        author_layout = QVBoxLayout(author_group)
+        author_layout.setSpacing(8)
+
+        # Author Name
+        author_row = QHBoxLayout()
+        author_label = QLabel("Author / Artist:")
+        author_label.setFixedWidth(120)
+        author_label.setToolTip("Sets the EXIF Artist and XMP Creator fields")
+        self._meta_author = QLineEdit()
+        self._meta_author.setPlaceholderText("e.g. Your Name")
+        self._meta_author.setToolTip(
+            "Your name or alias. Written to EXIF Artist and XMP Creator tags."
+        )
+        author_row.addWidget(author_label)
+        author_row.addWidget(self._meta_author)
+        author_layout.addLayout(author_row)
+
+        # Copyright
+        copyright_row = QHBoxLayout()
+        copyright_label = QLabel("Copyright:")
+        copyright_label.setFixedWidth(120)
+        copyright_label.setToolTip("Sets the EXIF Copyright field")
+        self._meta_copyright = QLineEdit()
+        self._meta_copyright.setPlaceholderText("e.g. © 2024 Your Name. All rights reserved.")
+        self._meta_copyright.setToolTip(
+            "Copyright notice. Written to the EXIF Copyright tag."
+        )
+        copyright_row.addWidget(copyright_label)
+        copyright_row.addWidget(self._meta_copyright)
+        author_layout.addLayout(copyright_row)
+
+        metadata_layout.addWidget(author_group)
+
+        # --- Tags / Keywords Group ---
+        tags_group = QGroupBox("Tags && Classification")
+        tags_layout = QVBoxLayout(tags_group)
+        tags_layout.setSpacing(8)
+
+        # Keywords
+        keywords_row = QHBoxLayout()
+        keywords_label = QLabel("Keywords:")
+        keywords_label.setFixedWidth(120)
+        keywords_label.setToolTip("Sets XMP Subject tags (semicolon-separated)")
+        self._meta_keywords = QLineEdit()
+        self._meta_keywords.setPlaceholderText(
+            "e.g. MSFS; Aviation; Screenshot; Airbus A320"
+        )
+        self._meta_keywords.setToolTip(
+            "Semicolon-separated keywords/tags. Written as XMP Subject tags. "
+            "Useful for searching and filtering screenshots."
+        )
+        keywords_row.addWidget(keywords_label)
+        keywords_row.addWidget(self._meta_keywords)
+        tags_layout.addLayout(keywords_row)
+
+        # Rating
+        rating_row = QHBoxLayout()
+        rating_label = QLabel("Rating:")
+        rating_label.setFixedWidth(120)
+        rating_label.setToolTip("Sets the XMP Rating field (0-5 stars)")
+        self._meta_rating = QSpinBox()
+        self._meta_rating.setRange(0, 5)
+        self._meta_rating.setSuffix(" ★")
+        self._meta_rating.setToolTip(
+            "Star rating from 0 (unrated) to 5. Written to the XMP Rating tag."
+        )
+        self._meta_rating.setFixedWidth(100)
+        rating_hint = QLabel("0 = unrated, 1-5 = star rating")
+        rating_hint.setStyleSheet("color: #6c7086; font-size: 8pt;")
+        rating_row.addWidget(rating_label)
+        rating_row.addWidget(self._meta_rating)
+        rating_row.addWidget(rating_hint)
+        rating_row.addStretch()
+        tags_layout.addLayout(rating_row)
+
+        metadata_layout.addWidget(tags_group)
+
+        # --- Comment Group ---
+        comment_group = QGroupBox("Comment")
+        comment_layout = QVBoxLayout(comment_group)
+        comment_layout.setSpacing(8)
+
+        comment_label = QLabel("Custom Comment:")
+        comment_label.setToolTip("Sets the EXIF UserComment field")
+        comment_layout.addWidget(comment_label)
+
+        self._meta_comment = QPlainTextEdit()
+        self._meta_comment.setPlaceholderText(
+            "Add a comment that will be embedded in every screenshot...\n"
+            "e.g. Captured during a flight from KJFK to EGLL"
+        )
+        self._meta_comment.setToolTip(
+            "Free-form comment text. Written to the EXIF UserComment tag."
+        )
+        self._meta_comment.setMaximumHeight(80)
+        comment_layout.addWidget(self._meta_comment)
+
+        metadata_layout.addWidget(comment_group)
+
+        # Auto-save hint
+        hint_label = QLabel(
+            "💡 Changes are saved automatically when you modify a field."
+        )
+        hint_label.setStyleSheet("color: #6c7086; font-size: 8pt; padding-top: 4px;")
+        metadata_layout.addWidget(hint_label)
+
+        metadata_layout.addStretch()
+
+        self._form.tabWidget.addTab(metadata_tab, "🏷️ Metadata Settings")
 
     @pyqtSlot(QPixmap)
     def on_thumbnail_ready(self, thumbnail: QPixmap):
@@ -183,6 +325,12 @@ class MainWindow(QMainWindow):
         self._form.show_notification.stateChanged.connect(
             self._on_show_Notification_changed
         )
+        # Metadata fields - auto-save on edit
+        self._meta_author.textChanged.connect(self._on_meta_author_changed)
+        self._meta_copyright.textChanged.connect(self._on_meta_copyright_changed)
+        self._meta_keywords.textChanged.connect(self._on_meta_keywords_changed)
+        self._meta_rating.valueChanged.connect(self._on_meta_rating_changed)
+        self._meta_comment.textChanged.connect(self._on_meta_comment_changed)
 
     def _tear_down_input_widget_connections(self):
         self._form.select_format.currentTextChanged.disconnect(
@@ -192,13 +340,19 @@ class MainWindow(QMainWindow):
         self._form.minimize_to_tray.stateChanged.disconnect(
             self._on_minimize_to_tray_changed
         )
-        self._form.start_to_tray.stateChanged.connect(
+        self._form.start_to_tray.stateChanged.disconnect(
             self._on_start_to_tray_changed
         )
         self._form.play_sound.stateChanged.disconnect(self._on_play_sound_changed)
         self._form.show_notification.stateChanged.disconnect(
             self._on_show_Notification_changed
         )
+        # Metadata fields
+        self._meta_author.textChanged.disconnect(self._on_meta_author_changed)
+        self._meta_copyright.textChanged.disconnect(self._on_meta_copyright_changed)
+        self._meta_keywords.textChanged.disconnect(self._on_meta_keywords_changed)
+        self._meta_rating.valueChanged.disconnect(self._on_meta_rating_changed)
+        self._meta_comment.textChanged.disconnect(self._on_meta_comment_changed)
 
     def _load_ui_state_from_settings(self):
         self._form.current_folder.setText(str(self._settings.screenshot_folder))
@@ -214,6 +368,12 @@ class MainWindow(QMainWindow):
         self._form.start_to_tray.setChecked(self._settings.start_to_tray)
         self._form.play_sound.setChecked(self._settings.play_sound)
         self._form.show_notification.setChecked(self._settings.show_notification)
+        # Metadata fields
+        self._meta_author.setText(self._settings.author_name)
+        self._meta_copyright.setText(self._settings.copyright_text)
+        self._meta_keywords.setText(self._settings.keywords)
+        self._meta_rating.setValue(self._settings.rating)
+        self._meta_comment.setPlainText(self._settings.custom_comment)
 
     @pyqtSlot()
     def _on_file_name_format_save(self):
@@ -294,6 +454,28 @@ class MainWindow(QMainWindow):
     @pyqtSlot(int)
     def _on_show_Notification_changed(self, state: int):
         self._settings.show_notification = state == Qt.CheckState.Checked
+
+    # ---- Metadata field handlers ----
+
+    @pyqtSlot(str)
+    def _on_meta_author_changed(self, text: str):
+        self._settings.author_name = text
+
+    @pyqtSlot(str)
+    def _on_meta_copyright_changed(self, text: str):
+        self._settings.copyright_text = text
+
+    @pyqtSlot(str)
+    def _on_meta_keywords_changed(self, text: str):
+        self._settings.keywords = text
+
+    @pyqtSlot(int)
+    def _on_meta_rating_changed(self, value: int):
+        self._settings.rating = value
+
+    @pyqtSlot()
+    def _on_meta_comment_changed(self):
+        self._settings.custom_comment = self._meta_comment.toPlainText()
 
     @pyqtSlot()
     def _on_open_folder(self):

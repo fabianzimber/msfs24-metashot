@@ -65,7 +65,7 @@ class CreditsDialog(QDialog):
 <p><b>{__app_name__}</b> is Copyright (C) {__copyright_year__} <a href="{__author_link__}">{__author__}</a></p>
 
 <p>The source code for {__app_name__} is available on
-<a href="https://github.com/pyviator/msfs-geoshot">GitHub</a>.
+<a href="https://github.com/fabianzimber/msfs24-metashot">GitHub</a>.
 Contributions are welcome!</p>
 </div>
 

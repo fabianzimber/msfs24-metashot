@@ -22,6 +22,12 @@ class _SettingsData:
     start_to_tray: bool = False
     play_sound: bool = True
     show_notification: bool = True
+    # Metadata settings
+    author_name: str = ""
+    copyright_text: str = ""
+    keywords: str = ""
+    rating: int = 0
+    custom_comment: str = ""
 
 
 class AppSettings(QObject):
@@ -159,3 +165,60 @@ class AppSettings(QObject):
     @times_launched.setter
     def times_launched(self, value: int):
         self._settings.setValue("internal/times_launched", value)
+
+    # ---- Metadata settings -----
+
+    @property
+    def author_name(self) -> str:
+        key = "metadata/author_name"
+        if not self._settings.contains(key):
+            return self._defaults.author_name
+        return self._settings.value(key, type=str)
+
+    @author_name.setter
+    def author_name(self, value: str):
+        self._settings.setValue("metadata/author_name", value)
+
+    @property
+    def copyright_text(self) -> str:
+        key = "metadata/copyright_text"
+        if not self._settings.contains(key):
+            return self._defaults.copyright_text
+        return self._settings.value(key, type=str)
+
+    @copyright_text.setter
+    def copyright_text(self, value: str):
+        self._settings.setValue("metadata/copyright_text", value)
+
+    @property
+    def keywords(self) -> str:
+        key = "metadata/keywords"
+        if not self._settings.contains(key):
+            return self._defaults.keywords
+        return self._settings.value(key, type=str)
+
+    @keywords.setter
+    def keywords(self, value: str):
+        self._settings.setValue("metadata/keywords", value)
+
+    @property
+    def rating(self) -> int:
+        key = "metadata/rating"
+        if not self._settings.contains(key):
+            return self._defaults.rating
+        return self._settings.value(key, type=int)
+
+    @rating.setter
+    def rating(self, value: int):
+        self._settings.setValue("metadata/rating", value)
+
+    @property
+    def custom_comment(self) -> str:
+        key = "metadata/custom_comment"
+        if not self._settings.contains(key):
+            return self._defaults.custom_comment
+        return self._settings.value(key, type=str)
+
+    @custom_comment.setter
+    def custom_comment(self, value: str):
+        self._settings.setValue("metadata/custom_comment", value)

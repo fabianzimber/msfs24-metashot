@@ -7,9 +7,9 @@ from PyQt5.QtWidgets import QApplication, QLabel, QWidget
 
 
 class NotificationColor(Enum):
-    success = "#90ee90"
-    error = "#ffcccb"
-    neutral = "#e6e6e6"
+    success = "#a6e3a1"
+    error = "#f38ba8"
+    neutral = "#6c7086"
 
 
 class ScreenPolicy(Enum):
@@ -70,8 +70,11 @@ class Notification(QLabel):
             f"""
 QLabel {{
     background-color: {color};
+    color: #1e1e2e;
     margin: 10px;
+    padding: 8px 16px;
     font-size: 10pt;
+    border-radius: 6px;
 }}
 """
         )
