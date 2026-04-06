@@ -4,6 +4,7 @@ from typing import Optional
 from PyQt5.QtCore import QObject, QSettings, QStandardPaths
 
 from .. import __app_name__, __author__
+from ..device_presets import PRESET_DEFAULT
 from ..screenshots import ImageFormat
 
 from dataclasses import dataclass, asdict
@@ -28,6 +29,15 @@ class _SettingsData:
     keywords: str = ""
     rating: int = 0
     custom_comment: str = ""
+    # Device preset
+    device_preset: str = PRESET_DEFAULT
+    device_make: str = ""
+    device_model: str = ""
+    device_software: str = ""
+    device_lens_make: str = ""
+    device_lens_model: str = ""
+    device_focal_length: str = ""  # stored as string for easy QSettings handling
+    device_f_number: str = ""  # stored as string for easy QSettings handling
 
 
 class AppSettings(QObject):
@@ -222,3 +232,93 @@ class AppSettings(QObject):
     @custom_comment.setter
     def custom_comment(self, value: str):
         self._settings.setValue("metadata/custom_comment", value)
+
+    # ---- Device preset settings -----
+
+    @property
+    def device_preset(self) -> str:
+        key = "device/preset"
+        if not self._settings.contains(key):
+            return self._defaults.device_preset
+        return self._settings.value(key, type=str)
+
+    @device_preset.setter
+    def device_preset(self, value: str):
+        self._settings.setValue("device/preset", value)
+
+    @property
+    def device_make(self) -> str:
+        key = "device/make"
+        if not self._settings.contains(key):
+            return self._defaults.device_make
+        return self._settings.value(key, type=str)
+
+    @device_make.setter
+    def device_make(self, value: str):
+        self._settings.setValue("device/make", value)
+
+    @property
+    def device_model(self) -> str:
+        key = "device/model"
+        if not self._settings.contains(key):
+            return self._defaults.device_model
+        return self._settings.value(key, type=str)
+
+    @device_model.setter
+    def device_model(self, value: str):
+        self._settings.setValue("device/model", value)
+
+    @property
+    def device_software(self) -> str:
+        key = "device/software"
+        if not self._settings.contains(key):
+            return self._defaults.device_software
+        return self._settings.value(key, type=str)
+
+    @device_software.setter
+    def device_software(self, value: str):
+        self._settings.setValue("device/software", value)
+
+    @property
+    def device_lens_make(self) -> str:
+        key = "device/lens_make"
+        if not self._settings.contains(key):
+            return self._defaults.device_lens_make
+        return self._settings.value(key, type=str)
+
+    @device_lens_make.setter
+    def device_lens_make(self, value: str):
+        self._settings.setValue("device/lens_make", value)
+
+    @property
+    def device_lens_model(self) -> str:
+        key = "device/lens_model"
+        if not self._settings.contains(key):
+            return self._defaults.device_lens_model
+        return self._settings.value(key, type=str)
+
+    @device_lens_model.setter
+    def device_lens_model(self, value: str):
+        self._settings.setValue("device/lens_model", value)
+
+    @property
+    def device_focal_length(self) -> str:
+        key = "device/focal_length"
+        if not self._settings.contains(key):
+            return self._defaults.device_focal_length
+        return self._settings.value(key, type=str)
+
+    @device_focal_length.setter
+    def device_focal_length(self, value: str):
+        self._settings.setValue("device/focal_length", value)
+
+    @property
+    def device_f_number(self) -> str:
+        key = "device/f_number"
+        if not self._settings.contains(key):
+            return self._defaults.device_f_number
+        return self._settings.value(key, type=str)
+
+    @device_f_number.setter
+    def device_f_number(self, value: str):
+        self._settings.setValue("device/f_number", value)

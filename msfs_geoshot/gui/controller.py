@@ -56,6 +56,13 @@ class ScreenShotController(QObject):
                 user_comment=self._settings.custom_comment,
                 rating=self._settings.rating,
                 keywords=self._settings.keywords,
+                device_make=self._settings.device_make,
+                device_model=self._settings.device_model,
+                device_software=self._settings.device_software,
+                device_lens_make=self._settings.device_lens_make,
+                device_lens_model=self._settings.device_lens_model,
+                device_focal_length=self._settings.device_focal_length,
+                device_f_number=self._settings.device_f_number,
             )
         except SimServiceError as e:
             if MOCK_SIMULATOR:

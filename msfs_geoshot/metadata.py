@@ -56,9 +56,14 @@ class Metadata:
     # constant
     GPSSpeedRef: Literal["K", "M", "N"] = field(init=False, default="K")  # km/h
     GPSImgDirectionRef: Literal["M", "T"] = field(init=False, default="T")  # true north
-    # -- MISC --
-    Make: str = field(init=False, default=__app_name__)  # captured by this tool
-    Model: str = field(init=False, default=__version__)
+    # -- MISC / Device --
+    Make: str = __app_name__  # device manufacturer
+    Model: str = __version__  # device model
+    Software: Optional[str] = None  # software version string
+    LensMake: Optional[str] = None  # lens manufacturer
+    LensModel: Optional[str] = None  # lens model identifier
+    FocalLength: Optional[float] = None  # focal length in mm
+    FNumber: Optional[float] = None  # aperture f-number
     ImageDescription: Optional[str] = None  # plane title
 
     # ---- XMP ----
