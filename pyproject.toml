@@ -7,9 +7,9 @@ readme = "README.md"
 license = "AGPL-3.0-or-later"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.15"
 PyQt5 = "^5.15.11"
-SimConnect = "^0.6.1"
+SimConnect = "^0.4.24"
 psutil = "^6.1.0"
 pyqtkeybind = "^0.0.8"
 tzlocal = "^5.2"
@@ -17,7 +17,7 @@ geopy = "^2.4.1"
 pathvalidate = "^3.2.1"
 pywin32 = "^308"
 Pillow = "^11.1.0"
-multiexit = "^1.5.1"
+multiexit = "^1.5.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.3.4"

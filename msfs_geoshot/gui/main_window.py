@@ -598,14 +598,45 @@ class MainWindow(QMainWindow):
     # ---- Device preset handlers ----
 
     def _load_device_fields_from_settings(self):
-        """Populate device field widgets from persisted settings."""
-        self._device_make_edit.setText(self._settings.device_make)
-        self._device_model_edit.setText(self._settings.device_model)
-        self._device_software_edit.setText(self._settings.device_software)
-        self._device_lens_make_edit.setText(self._settings.device_lens_make)
-        self._device_lens_model_edit.setText(self._settings.device_lens_model)
-        self._device_focal_length_edit.setText(self._settings.device_focal_length)
-        self._device_f_number_edit.setText(self._settings.device_f_number)
+        """Populate device field widgets from persisted settings.
+
+        On first run (or after restoring defaults), the device_* settings are
+        empty strings.  When a built-in preset is selected, apply its values so
+        the user sees the correct fields instead of blank read-only inputs.
+        """
+        preset_key = self._get_current_preset_key()
+        all_empty = not any([
+            self._settings.device_make,
+            self._settings.device_model,
+            self._settings.device_software,
+            self._settings.device_lens_make,
+            self._settings.device_lens_model,
+            self._settings.device_focal_length,
+            self._settings.device_f_number,
+        ])
+
+        if all_empty and preset_key != PRESET_CUSTOM and preset_key in DEVICE_PRESETS:
+            # First run / defaults restored — seed fields from the preset
+            preset = DEVICE_PRESETS[preset_key]
+            self._device_make_edit.setText(preset.make)
+            self._device_model_edit.setText(preset.model)
+            self._device_software_edit.setText(preset.software)
+            self._device_lens_make_edit.setText(preset.lens_make)
+            self._device_lens_model_edit.setText(preset.lens_model)
+            self._device_focal_length_edit.setText(
+                str(preset.focal_length) if preset.focal_length else ""
+            )
+            self._device_f_number_edit.setText(
+                str(preset.f_number) if preset.f_number else ""
+            )
+        else:
+            self._device_make_edit.setText(self._settings.device_make)
+            self._device_model_edit.setText(self._settings.device_model)
+            self._device_software_edit.setText(self._settings.device_software)
+            self._device_lens_make_edit.setText(self._settings.device_lens_make)
+            self._device_lens_model_edit.setText(self._settings.device_lens_model)
+            self._device_focal_length_edit.setText(self._settings.device_focal_length)
+            self._device_f_number_edit.setText(self._settings.device_f_number)
 
     def _update_device_fields_editable(self):
         """Enable/disable device fields based on whether the preset is 'Custom'."""
