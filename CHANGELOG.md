@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2024-12-01
+
+### Added
+
+- New **Metadata Settings** tab for configuring persistent metadata fields:
+  - Author / Artist name (EXIF Artist, XMP Creator)
+  - Copyright notice (EXIF Copyright)
+  - Keywords / Tags (XMP Subject, semicolon-separated)
+  - Star Rating (XMP Rating, 0-5)
+  - Custom Comment (EXIF UserComment)
+- Modern dark theme with consistent styling across all widgets
+- Tooltips on all metadata fields explaining what EXIF/XMP tags they map to
+- Auto-save for all metadata fields
+
+### Changed
+
+- Rebranded from "MSFS GeoShot" to "MSFS MetaShot" to reflect enhanced metadata capabilities
+- Updated for Microsoft Flight Simulator 2024 compatibility
+- Updated all dependencies to their latest versions:
+  - Python ^3.10, PyQt5 ^5.15.11, Pillow ^11.1.0, psutil ^6.1.0, geopy ^2.4.1, and more
+- Enlarged default window size for better usability
+- Source metadata now reads "MSFS 2024" instead of "MSFS"
+- Improved UI description text
+
+### Fixed
+
+- Fixed bug in `_tear_down_input_widget_connections` where `start_to_tray` used `connect` instead of `disconnect`
+- Fixed bug in `MetadataService.write_data` where `capture_time` was compared by value instead of attribute name
+
 ## [1.0.0-beta.2] - 2021-09-26
 
 ### Fixed
