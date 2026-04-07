@@ -11,9 +11,28 @@ from PyQt5.QtGui import (
     QKeySequence,
     QPixmap,
 )
-from PyQt5.QtWidgets import QApplication, QFileDialog, QLineEdit, QMainWindow
+from PyQt5.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPlainTextEdit,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .. import RESOURCES_PATH, __app_name__, __author__, __store_url__, __version__
+from ..device_presets import (
+    DEVICE_PRESETS,
+    PRESET_CUSTOM,
+    PRESET_ORDER,
+    get_preset_labels,
+)
 from ..metadata import Metadata
 from ..names import FileNameComposer
 from ..screenshots import ImageFormat
@@ -68,6 +87,8 @@ class MainWindow(QMainWindow):
         self._thumbnail_widget.clicked.connect(self._on_open_last_screenshot)  # type: ignore
         self._thumbnail_widget.setPixmap(app_icon.pixmap(QSize(170, 96)))
 
+        self._setup_metadata_tab()
+
         self._load_ui_state_from_settings()
         self._setup_input_validators()
         self._setup_format_field_description()
@@ -80,6 +101,216 @@ class MainWindow(QMainWindow):
             f"<b>{__app_name__}</b> v{__version__} by {__author__}"
         )
         self.setWindowTitle(__app_name__)
+
+    def _setup_metadata_tab(self):
+        """Create and add the Metadata Settings tab programmatically."""
+        metadata_tab = QWidget()
+        metadata_layout = QVBoxLayout(metadata_tab)
+        metadata_layout.setSpacing(12)
+
+        # Description label
+        intro_label = QLabel(
+            "Configure metadata fields that will be automatically embedded "
+            "into every screenshot you take. These values are written as "
+            "EXIF/XMP tags and are visible in photo viewers and file explorers."
+        )
+        intro_label.setWordWrap(True)
+        intro_label.setStyleSheet("color: #a6adc8; font-size: 9pt; padding: 4px 0;")
+        metadata_layout.addWidget(intro_label)
+
+        # --- Device Preset Group ---
+        device_group = QGroupBox("📱 Device Preset")
+        device_layout = QVBoxLayout(device_group)
+        device_layout.setSpacing(8)
+
+        # Preset selector row
+        preset_row = QHBoxLayout()
+        preset_label = QLabel("Device Template:")
+        preset_label.setFixedWidth(120)
+        preset_label.setToolTip(
+            "Select a device preset to simulate photos taken from that device. "
+            "GPS location data still comes from your live flight."
+        )
+        self._device_preset_combo = QComboBox()
+        preset_labels = get_preset_labels()
+        for key in PRESET_ORDER:
+            self._device_preset_combo.addItem(preset_labels[key], key)
+        self._device_preset_combo.setToolTip(
+            "Choose a built-in device template or 'Custom' to enter your own values."
+        )
+        preset_row.addWidget(preset_label)
+        preset_row.addWidget(self._device_preset_combo)
+        preset_row.addStretch()
+        device_layout.addLayout(preset_row)
+
+        # Device detail fields
+        self._device_make_edit = self._make_device_field(
+            device_layout, "Make:", "e.g. Apple", "Device manufacturer (EXIF Make)"
+        )
+        self._device_model_edit = self._make_device_field(
+            device_layout, "Model:", "e.g. iPhone 17 Pro", "Device model (EXIF Model)"
+        )
+        self._device_software_edit = self._make_device_field(
+            device_layout, "Software:", "e.g. 18.0", "Software version (EXIF Software)"
+        )
+        self._device_lens_make_edit = self._make_device_field(
+            device_layout, "Lens Make:", "e.g. Apple", "Lens manufacturer (EXIF LensMake)"
+        )
+        self._device_lens_model_edit = self._make_device_field(
+            device_layout,
+            "Lens Model:",
+            "e.g. iPhone 17 Pro back triple camera 6.765mm f/1.78",
+            "Lens model (EXIF LensModel)",
+        )
+        self._device_focal_length_edit = self._make_device_field(
+            device_layout, "Focal Length:", "e.g. 6.765", "Focal length in mm (EXIF FocalLength)"
+        )
+        self._device_f_number_edit = self._make_device_field(
+            device_layout, "F-Number:", "e.g. 1.78", "Aperture f-number (EXIF FNumber)"
+        )
+
+        preset_hint = QLabel(
+            "💡 Select a template above to auto-fill these fields. "
+            "Choose 'Custom' to enter your own values. "
+            "GPS coordinates are always live from your flight."
+        )
+        preset_hint.setWordWrap(True)
+        preset_hint.setStyleSheet("color: #6c7086; font-size: 8pt; padding-top: 2px;")
+        device_layout.addWidget(preset_hint)
+
+        metadata_layout.addWidget(device_group)
+
+        # --- Author / Copyright Group ---
+        author_group = QGroupBox("Author && Copyright")
+        author_layout = QVBoxLayout(author_group)
+        author_layout.setSpacing(8)
+
+        # Author Name
+        author_row = QHBoxLayout()
+        author_label = QLabel("Author / Artist:")
+        author_label.setFixedWidth(120)
+        author_label.setToolTip("Sets the EXIF Artist and XMP Creator fields")
+        self._meta_author = QLineEdit()
+        self._meta_author.setPlaceholderText("e.g. Your Name")
+        self._meta_author.setToolTip(
+            "Your name or alias. Written to EXIF Artist and XMP Creator tags."
+        )
+        author_row.addWidget(author_label)
+        author_row.addWidget(self._meta_author)
+        author_layout.addLayout(author_row)
+
+        # Copyright
+        copyright_row = QHBoxLayout()
+        copyright_label = QLabel("Copyright:")
+        copyright_label.setFixedWidth(120)
+        copyright_label.setToolTip("Sets the EXIF Copyright field")
+        self._meta_copyright = QLineEdit()
+        self._meta_copyright.setPlaceholderText("e.g. © 2024 Your Name. All rights reserved.")
+        self._meta_copyright.setToolTip(
+            "Copyright notice. Written to the EXIF Copyright tag."
+        )
+        copyright_row.addWidget(copyright_label)
+        copyright_row.addWidget(self._meta_copyright)
+        author_layout.addLayout(copyright_row)
+
+        metadata_layout.addWidget(author_group)
+
+        # --- Tags / Keywords Group ---
+        tags_group = QGroupBox("Tags && Classification")
+        tags_layout = QVBoxLayout(tags_group)
+        tags_layout.setSpacing(8)
+
+        # Keywords
+        keywords_row = QHBoxLayout()
+        keywords_label = QLabel("Keywords:")
+        keywords_label.setFixedWidth(120)
+        keywords_label.setToolTip("Sets XMP Subject tags (semicolon-separated)")
+        self._meta_keywords = QLineEdit()
+        self._meta_keywords.setPlaceholderText(
+            "e.g. MSFS; Aviation; Screenshot; Airbus A320"
+        )
+        self._meta_keywords.setToolTip(
+            "Semicolon-separated keywords/tags. Written as XMP Subject tags. "
+            "Useful for searching and filtering screenshots."
+        )
+        keywords_row.addWidget(keywords_label)
+        keywords_row.addWidget(self._meta_keywords)
+        tags_layout.addLayout(keywords_row)
+
+        # Rating
+        rating_row = QHBoxLayout()
+        rating_label = QLabel("Rating:")
+        rating_label.setFixedWidth(120)
+        rating_label.setToolTip("Sets the XMP Rating field (0-5 stars)")
+        self._meta_rating = QSpinBox()
+        self._meta_rating.setRange(0, 5)
+        self._meta_rating.setSuffix(" ★")
+        self._meta_rating.setToolTip(
+            "Star rating from 0 (unrated) to 5. Written to the XMP Rating tag."
+        )
+        self._meta_rating.setFixedWidth(100)
+        rating_hint = QLabel("0 = unrated, 1-5 = star rating")
+        rating_hint.setStyleSheet("color: #6c7086; font-size: 8pt;")
+        rating_row.addWidget(rating_label)
+        rating_row.addWidget(self._meta_rating)
+        rating_row.addWidget(rating_hint)
+        rating_row.addStretch()
+        tags_layout.addLayout(rating_row)
+
+        metadata_layout.addWidget(tags_group)
+
+        # --- Comment Group ---
+        comment_group = QGroupBox("Comment")
+        comment_layout = QVBoxLayout(comment_group)
+        comment_layout.setSpacing(8)
+
+        comment_label = QLabel("Custom Comment:")
+        comment_label.setToolTip("Sets the EXIF UserComment field")
+        comment_layout.addWidget(comment_label)
+
+        self._meta_comment = QPlainTextEdit()
+        self._meta_comment.setPlaceholderText(
+            "Add a comment that will be embedded in every screenshot...\n"
+            "e.g. Captured during a flight from KJFK to EGLL"
+        )
+        self._meta_comment.setToolTip(
+            "Free-form comment text. Written to the EXIF UserComment tag."
+        )
+        self._meta_comment.setMaximumHeight(80)
+        comment_layout.addWidget(self._meta_comment)
+
+        metadata_layout.addWidget(comment_group)
+
+        # Auto-save hint
+        hint_label = QLabel(
+            "💡 Changes are saved automatically when you modify a field."
+        )
+        hint_label.setStyleSheet("color: #6c7086; font-size: 8pt; padding-top: 4px;")
+        metadata_layout.addWidget(hint_label)
+
+        metadata_layout.addStretch()
+
+        self._form.tabWidget.addTab(metadata_tab, "🏷️ Metadata Settings")
+
+    @staticmethod
+    def _make_device_field(
+        parent_layout: QVBoxLayout,
+        label_text: str,
+        placeholder: str,
+        tooltip: str,
+    ) -> QLineEdit:
+        """Helper to create a labeled device-field row."""
+        row = QHBoxLayout()
+        label = QLabel(label_text)
+        label.setFixedWidth(120)
+        label.setToolTip(tooltip)
+        edit = QLineEdit()
+        edit.setPlaceholderText(placeholder)
+        edit.setToolTip(tooltip)
+        row.addWidget(label)
+        row.addWidget(edit)
+        parent_layout.addLayout(row)
+        return edit
 
     @pyqtSlot(QPixmap)
     def on_thumbnail_ready(self, thumbnail: QPixmap):
@@ -183,6 +414,23 @@ class MainWindow(QMainWindow):
         self._form.show_notification.stateChanged.connect(
             self._on_show_Notification_changed
         )
+        # Metadata fields - auto-save on edit
+        self._meta_author.textChanged.connect(self._on_meta_author_changed)
+        self._meta_copyright.textChanged.connect(self._on_meta_copyright_changed)
+        self._meta_keywords.textChanged.connect(self._on_meta_keywords_changed)
+        self._meta_rating.valueChanged.connect(self._on_meta_rating_changed)
+        self._meta_comment.textChanged.connect(self._on_meta_comment_changed)
+        # Device preset fields
+        self._device_preset_combo.currentIndexChanged.connect(
+            self._on_device_preset_changed
+        )
+        self._device_make_edit.textChanged.connect(self._on_device_field_changed)
+        self._device_model_edit.textChanged.connect(self._on_device_field_changed)
+        self._device_software_edit.textChanged.connect(self._on_device_field_changed)
+        self._device_lens_make_edit.textChanged.connect(self._on_device_field_changed)
+        self._device_lens_model_edit.textChanged.connect(self._on_device_field_changed)
+        self._device_focal_length_edit.textChanged.connect(self._on_device_field_changed)
+        self._device_f_number_edit.textChanged.connect(self._on_device_field_changed)
 
     def _tear_down_input_widget_connections(self):
         self._form.select_format.currentTextChanged.disconnect(
@@ -192,13 +440,30 @@ class MainWindow(QMainWindow):
         self._form.minimize_to_tray.stateChanged.disconnect(
             self._on_minimize_to_tray_changed
         )
-        self._form.start_to_tray.stateChanged.connect(
+        self._form.start_to_tray.stateChanged.disconnect(
             self._on_start_to_tray_changed
         )
         self._form.play_sound.stateChanged.disconnect(self._on_play_sound_changed)
         self._form.show_notification.stateChanged.disconnect(
             self._on_show_Notification_changed
         )
+        # Metadata fields
+        self._meta_author.textChanged.disconnect(self._on_meta_author_changed)
+        self._meta_copyright.textChanged.disconnect(self._on_meta_copyright_changed)
+        self._meta_keywords.textChanged.disconnect(self._on_meta_keywords_changed)
+        self._meta_rating.valueChanged.disconnect(self._on_meta_rating_changed)
+        self._meta_comment.textChanged.disconnect(self._on_meta_comment_changed)
+        # Device preset fields
+        self._device_preset_combo.currentIndexChanged.disconnect(
+            self._on_device_preset_changed
+        )
+        self._device_make_edit.textChanged.disconnect(self._on_device_field_changed)
+        self._device_model_edit.textChanged.disconnect(self._on_device_field_changed)
+        self._device_software_edit.textChanged.disconnect(self._on_device_field_changed)
+        self._device_lens_make_edit.textChanged.disconnect(self._on_device_field_changed)
+        self._device_lens_model_edit.textChanged.disconnect(self._on_device_field_changed)
+        self._device_focal_length_edit.textChanged.disconnect(self._on_device_field_changed)
+        self._device_f_number_edit.textChanged.disconnect(self._on_device_field_changed)
 
     def _load_ui_state_from_settings(self):
         self._form.current_folder.setText(str(self._settings.screenshot_folder))
@@ -214,6 +479,19 @@ class MainWindow(QMainWindow):
         self._form.start_to_tray.setChecked(self._settings.start_to_tray)
         self._form.play_sound.setChecked(self._settings.play_sound)
         self._form.show_notification.setChecked(self._settings.show_notification)
+        # Metadata fields
+        self._meta_author.setText(self._settings.author_name)
+        self._meta_copyright.setText(self._settings.copyright_text)
+        self._meta_keywords.setText(self._settings.keywords)
+        self._meta_rating.setValue(self._settings.rating)
+        self._meta_comment.setPlainText(self._settings.custom_comment)
+        # Device preset
+        preset_key = self._settings.device_preset
+        index = self._device_preset_combo.findData(preset_key)
+        if index >= 0:
+            self._device_preset_combo.setCurrentIndex(index)
+        self._load_device_fields_from_settings()
+        self._update_device_fields_editable()
 
     @pyqtSlot()
     def _on_file_name_format_save(self):
@@ -294,6 +572,124 @@ class MainWindow(QMainWindow):
     @pyqtSlot(int)
     def _on_show_Notification_changed(self, state: int):
         self._settings.show_notification = state == Qt.CheckState.Checked
+
+    # ---- Metadata field handlers ----
+
+    @pyqtSlot(str)
+    def _on_meta_author_changed(self, text: str):
+        self._settings.author_name = text
+
+    @pyqtSlot(str)
+    def _on_meta_copyright_changed(self, text: str):
+        self._settings.copyright_text = text
+
+    @pyqtSlot(str)
+    def _on_meta_keywords_changed(self, text: str):
+        self._settings.keywords = text
+
+    @pyqtSlot(int)
+    def _on_meta_rating_changed(self, value: int):
+        self._settings.rating = value
+
+    @pyqtSlot()
+    def _on_meta_comment_changed(self):
+        self._settings.custom_comment = self._meta_comment.toPlainText()
+
+    # ---- Device preset handlers ----
+
+    def _load_device_fields_from_settings(self):
+        """Populate device field widgets from persisted settings.
+
+        On first run (or after restoring defaults), the device_* settings are
+        empty strings.  When a built-in preset is selected, apply its values so
+        the user sees the correct fields instead of blank read-only inputs.
+        """
+        preset_key = self._get_current_preset_key()
+        all_empty = not any([
+            self._settings.device_make,
+            self._settings.device_model,
+            self._settings.device_software,
+            self._settings.device_lens_make,
+            self._settings.device_lens_model,
+            self._settings.device_focal_length,
+            self._settings.device_f_number,
+        ])
+
+        if all_empty and preset_key != PRESET_CUSTOM and preset_key in DEVICE_PRESETS:
+            # First run / defaults restored — seed fields from the preset
+            preset = DEVICE_PRESETS[preset_key]
+            self._device_make_edit.setText(preset.make)
+            self._device_model_edit.setText(preset.model)
+            self._device_software_edit.setText(preset.software)
+            self._device_lens_make_edit.setText(preset.lens_make)
+            self._device_lens_model_edit.setText(preset.lens_model)
+            self._device_focal_length_edit.setText(
+                str(preset.focal_length) if preset.focal_length else ""
+            )
+            self._device_f_number_edit.setText(
+                str(preset.f_number) if preset.f_number else ""
+            )
+        else:
+            self._device_make_edit.setText(self._settings.device_make)
+            self._device_model_edit.setText(self._settings.device_model)
+            self._device_software_edit.setText(self._settings.device_software)
+            self._device_lens_make_edit.setText(self._settings.device_lens_make)
+            self._device_lens_model_edit.setText(self._settings.device_lens_model)
+            self._device_focal_length_edit.setText(self._settings.device_focal_length)
+            self._device_f_number_edit.setText(self._settings.device_f_number)
+
+    def _update_device_fields_editable(self):
+        """Enable/disable device fields based on whether the preset is 'Custom'."""
+        is_custom = self._get_current_preset_key() == PRESET_CUSTOM
+        for field in self._get_device_field_widgets():
+            field.setReadOnly(not is_custom)
+
+    def _get_current_preset_key(self) -> str:
+        return self._device_preset_combo.currentData() or PRESET_CUSTOM
+
+    def _get_device_field_widgets(self):
+        return [
+            self._device_make_edit,
+            self._device_model_edit,
+            self._device_software_edit,
+            self._device_lens_make_edit,
+            self._device_lens_model_edit,
+            self._device_focal_length_edit,
+            self._device_f_number_edit,
+        ]
+
+    @pyqtSlot(int)
+    def _on_device_preset_changed(self, _index: int):
+        preset_key = self._get_current_preset_key()
+        self._settings.device_preset = preset_key
+
+        if preset_key != PRESET_CUSTOM and preset_key in DEVICE_PRESETS:
+            preset = DEVICE_PRESETS[preset_key]
+            # Auto-fill the fields from the preset and persist them
+            self._device_make_edit.setText(preset.make)
+            self._device_model_edit.setText(preset.model)
+            self._device_software_edit.setText(preset.software)
+            self._device_lens_make_edit.setText(preset.lens_make)
+            self._device_lens_model_edit.setText(preset.lens_model)
+            self._device_focal_length_edit.setText(
+                str(preset.focal_length) if preset.focal_length else ""
+            )
+            self._device_f_number_edit.setText(
+                str(preset.f_number) if preset.f_number else ""
+            )
+
+        self._update_device_fields_editable()
+
+    @pyqtSlot(str)
+    def _on_device_field_changed(self, _text: str):
+        """Persist all device fields whenever any field changes."""
+        self._settings.device_make = self._device_make_edit.text()
+        self._settings.device_model = self._device_model_edit.text()
+        self._settings.device_software = self._device_software_edit.text()
+        self._settings.device_lens_make = self._device_lens_make_edit.text()
+        self._settings.device_lens_model = self._device_lens_model_edit.text()
+        self._settings.device_focal_length = self._device_focal_length_edit.text()
+        self._settings.device_f_number = self._device_f_number_edit.text()
 
     @pyqtSlot()
     def _on_open_folder(self):

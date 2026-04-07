@@ -56,15 +56,27 @@ class Metadata:
     # constant
     GPSSpeedRef: Literal["K", "M", "N"] = field(init=False, default="K")  # km/h
     GPSImgDirectionRef: Literal["M", "T"] = field(init=False, default="T")  # true north
-    # -- MISC --
-    Make: str = field(init=False, default=__app_name__)  # captured by this tool
-    Model: str = field(init=False, default=__version__)
+    # -- MISC / Device --
+    Make: str = __app_name__  # generating application name
+    Model: str = __version__  # generating application version/build identifier
+    Software: Optional[str] = None  # optional software metadata string
+    LensMake: Optional[str] = None  # lens manufacturer
+    LensModel: Optional[str] = None  # lens model identifier
+    FocalLength: Optional[float] = None  # focal length in mm
+    FNumber: Optional[float] = None  # aperture f-number
     ImageDescription: Optional[str] = None  # plane title
 
     # ---- XMP ----
     Description: Optional[str] = None  # plane title
     Creator: str = field(init=False, default=__app_name__)
-    Source: str = field(init=False, default="MSFS")
+    Source: str = field(init=False, default="MSFS 2024")
+
+    # ---- User-configurable metadata ----
+    Artist: Optional[str] = None  # photographer / author name
+    Copyright: Optional[str] = None  # copyright notice
+    UserComment: Optional[str] = None  # free-form user comment
+    Rating: Optional[int] = None  # star rating 0-5
+    Keywords: Optional[str] = None  # semicolon-separated keywords/tags (XMP Subject)
 
     def __post_init__(self):
         """Calculate derivative fields dynamically"""
@@ -78,6 +90,10 @@ class Metadata:
             self.GPSDestLatitudeRef = "N" if self.GPSDestLatitude >= 0 else "S"
         if self.GPSDestLongitude is not None:
             self.GPSDestLongitudeRef = "E" if self.GPSDestLongitude >= 0 else "W"
+
+        # Override Creator with Artist if set
+        if self.Artist:
+            self.Creator = self.Artist
 
 
 class MetadataService:
@@ -95,8 +111,16 @@ class MetadataService:
             arguments.append("-verbose")
 
         for attribute, value in asdict(metadata).items():
-            if value == "capture_time":
+            if attribute == "capture_time":
                 # internal value
+                continue
+            elif attribute == "Keywords":
+                # Keywords are written as XMP Subject tags (one per keyword)
+                if value:
+                    for keyword in str(value).split(";"):
+                        keyword = keyword.strip()
+                        if keyword:
+                            arguments.append(f"-Subject={keyword}")
                 continue
             elif value == -999999:
                 # TODO: Is this necessary?

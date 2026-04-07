@@ -16,6 +16,7 @@ import math
 import psutil
 from SimConnect import AircraftRequests, SimConnect
 
+from . import __app_name__, __version__
 from .metadata import EXIF_DATE_FORMAT, EXIF_OFFSET_FORMAT, Metadata
 from .time import (
     get_datetime_string,
@@ -63,7 +64,7 @@ _nullable_sim_data: Set[str] = set(("dest_latitude", "dest_longitude", "aircraft
 class SimService:
 
     _sim_executable = "FlightSimulator.exe"
-    _sim_window_title = "Microsoft Flight Simulator"
+    _sim_window_title = "Microsoft Flight Simulator 2024"
 
     def _is_sim_running(self) -> bool:
         return self._sim_executable in (p.name() for p in psutil.process_iter())
@@ -87,7 +88,21 @@ class SimService:
             raise SimServiceError("Could not find simulator window.")
         return results[0]
 
-    def get_flight_data(self) -> Optional[Metadata]:
+    def get_flight_data(
+        self,
+        artist: Optional[str] = None,
+        copyright_text: Optional[str] = None,
+        user_comment: Optional[str] = None,
+        rating: Optional[int] = None,
+        keywords: Optional[str] = None,
+        device_make: Optional[str] = None,
+        device_model: Optional[str] = None,
+        device_software: Optional[str] = None,
+        device_lens_make: Optional[str] = None,
+        device_lens_model: Optional[str] = None,
+        device_focal_length: Optional[str] = None,
+        device_f_number: Optional[str] = None,
+    ) -> Optional[Metadata]:
         if not self._is_sim_running():
             raise SimServiceError("Simulator is not running")
 
@@ -140,9 +155,38 @@ class SimService:
             warnings.warn("User is not currently in flight.")
             return None
 
-        return self._sim_location_to_metadata(sim_location_data)
+        return self._sim_location_to_metadata(
+            sim_location_data,
+            artist=artist,
+            copyright_text=copyright_text,
+            user_comment=user_comment,
+            rating=rating,
+            keywords=keywords,
+            device_make=device_make,
+            device_model=device_model,
+            device_software=device_software,
+            device_lens_make=device_lens_make,
+            device_lens_model=device_lens_model,
+            device_focal_length=device_focal_length,
+            device_f_number=device_f_number,
+        )
 
-    def _sim_location_to_metadata(self, sim_location_data: _SimData) -> Metadata:
+    def _sim_location_to_metadata(
+        self,
+        sim_location_data: _SimData,
+        artist: Optional[str] = None,
+        copyright_text: Optional[str] = None,
+        user_comment: Optional[str] = None,
+        rating: Optional[int] = None,
+        keywords: Optional[str] = None,
+        device_make: Optional[str] = None,
+        device_model: Optional[str] = None,
+        device_software: Optional[str] = None,
+        device_lens_make: Optional[str] = None,
+        device_lens_model: Optional[str] = None,
+        device_focal_length: Optional[str] = None,
+        device_f_number: Optional[str] = None,
+    ) -> Metadata:
         description = sim_location_data.aircraft_type
         capture_time = time.time()
 
@@ -151,6 +195,10 @@ class SimService:
         )
         offset_timedelta = get_local_offset_delta()
         offset_time = string_format_time_delta(offset_timedelta, EXIF_OFFSET_FORMAT)
+
+        # Parse optional float device fields
+        focal_length = self._parse_optional_float(device_focal_length)
+        f_number = self._parse_optional_float(device_f_number)
 
         return Metadata(
             # Internal
@@ -170,7 +218,30 @@ class SimService:
             GPSDestLatitude=round(sim_location_data.dest_latitude, 5)
             if sim_location_data.dest_latitude
             else None,
-            # MISC
+            # Device / MISC
+            Make=device_make or __app_name__,
+            Model=device_model or __version__,
+            Software=device_software or None,
+            LensMake=device_lens_make or None,
+            LensModel=device_lens_model or None,
+            FocalLength=focal_length,
+            FNumber=f_number,
             Description=description,
             ImageDescription=description,
+            # User-configurable metadata
+            Artist=artist or None,
+            Copyright=copyright_text or None,
+            UserComment=user_comment or None,
+            Rating=rating if rating and rating > 0 else None,
+            Keywords=keywords or None,
         )
+
+    @staticmethod
+    def _parse_optional_float(value: Optional[str]) -> Optional[float]:
+        """Safely parse a string to float, returning None on failure."""
+        if not value or not value.strip():
+            return None
+        try:
+            return float(value.strip())
+        except (ValueError, TypeError):
+            return None

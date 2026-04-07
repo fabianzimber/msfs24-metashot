@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>546</width>
-    <height>527</height>
+    <width>580</width>
+    <height>580</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,8 +18,8 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>480</width>
-    <height>420</height>
+    <width>520</width>
+    <height>480</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -65,7 +65,7 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Create screenshots of your Flight Simulator flights with 🌍 geotags and other helpful 🏷️ metadata attached!</string>
+             <string>Create enriched screenshots of your MSFS 2024 flights with 🌍 geotags, 🏷️ metadata, and more!</string>
             </property>
             <property name="wordWrap">
              <bool>true</bool>

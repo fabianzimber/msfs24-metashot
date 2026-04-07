@@ -15,6 +15,7 @@ from .gui.feedback import FeedbackDialog
 from .gui.hotkeys import GlobalHotkeyService, HotkeyID, WindowsEventFilter
 from .gui.main_window import MainWindow
 from .gui.settings import AppSettings
+from .gui.styles import APP_STYLESHEET
 from .gui.thumbnails import ThumbnailMaker
 from .gui.tray_icon import AppTrayIcon
 from .metadata import MetadataService
@@ -42,6 +43,7 @@ def run():
     icon_window = QIcon(str(RESOURCES_PATH / "main.ico"))
     icon_tray = QIcon(str(RESOURCES_PATH / "tray.png"))
     app.setWindowIcon(icon_window)
+    app.setStyleSheet(APP_STYLESHEET)
 
     sim_service = SimService()
     metadata_service = MetadataService()

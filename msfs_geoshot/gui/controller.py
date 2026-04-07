@@ -50,7 +50,20 @@ class ScreenShotController(QObject):
             screenshot_folder.mkdir(parents=True, exist_ok=True)
 
         try:
-            metadata = self._sim_service.get_flight_data()
+            metadata = self._sim_service.get_flight_data(
+                artist=self._settings.author_name,
+                copyright_text=self._settings.copyright_text,
+                user_comment=self._settings.custom_comment,
+                rating=self._settings.rating,
+                keywords=self._settings.keywords,
+                device_make=self._settings.device_make,
+                device_model=self._settings.device_model,
+                device_software=self._settings.device_software,
+                device_lens_make=self._settings.device_lens_make,
+                device_lens_model=self._settings.device_lens_model,
+                device_focal_length=self._settings.device_focal_length,
+                device_f_number=self._settings.device_f_number,
+            )
         except SimServiceError as e:
             if MOCK_SIMULATOR:
                 from ..debug import get_mock_metadata
