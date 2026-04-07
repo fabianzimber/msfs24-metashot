@@ -57,9 +57,9 @@ class Metadata:
     GPSSpeedRef: Literal["K", "M", "N"] = field(init=False, default="K")  # km/h
     GPSImgDirectionRef: Literal["M", "T"] = field(init=False, default="T")  # true north
     # -- MISC / Device --
-    Make: str = __app_name__  # device manufacturer
-    Model: str = __version__  # device model
-    Software: Optional[str] = None  # software version string
+    Make: str = __app_name__  # generating application name
+    Model: str = __version__  # generating application version/build identifier
+    Software: Optional[str] = None  # optional software metadata string
     LensMake: Optional[str] = None  # lens manufacturer
     LensModel: Optional[str] = None  # lens model identifier
     FocalLength: Optional[float] = None  # focal length in mm
